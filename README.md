@@ -142,6 +142,10 @@ export FM_APP_PASSWORD="your-app-password"  # Optional
 | `fm-cli settings offline on` | Enable offline mode |
 | `fm-cli settings offline off` | Disable offline mode |
 | `fm-cli sync` | Sync pending offline changes |
+| `fm-cli list mailboxes` | List mailboxes as JSON |
+| `fm-cli list emails --mailbox INBOX --limit 20` | List emails as JSON |
+| `fm-cli get email <email-id>` | Get email body as JSON |
+| `fm-cli search --query "invoice" --limit 20` | Search emails as JSON |
 | `fm-cli debug` | Show debug info (JMAP session, CalDAV/CardDAV status) |
 | `fm-cli help` | Show help |
 

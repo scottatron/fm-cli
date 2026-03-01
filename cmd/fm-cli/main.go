@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"runtime"
 	"strconv"
 	"strings"
 	"syscall"
@@ -188,9 +189,7 @@ func login() {
 	appPwd := strings.TrimSpace(string(byteAppPwd))
 	fmt.Println()
 
-	ring, err := keyring.Open(keyring.Config{
-		ServiceName: serviceName,
-	})
+	ring, err := openKeyring()
 	if err != nil {
 		fmt.Printf("Error opening keyring: %v\n", err)
 		return
@@ -233,10 +232,21 @@ func login() {
 	}
 }
 
+func openKeyring() (keyring.Keyring, error) {
+	cfg := keyring.Config{ServiceName: serviceName}
+
+	// On Linux, prefer Secret Service (libsecret over D-Bus) and avoid
+	// silently falling back to file backend.
+	if runtime.GOOS == "linux" {
+		cfg.AllowedBackends = []keyring.BackendType{keyring.SecretServiceBackend}
+		cfg.LibSecretCollectionName = "login"
+	}
+
+	return keyring.Open(cfg)
+}
+
 func logout() {
-	ring, err := keyring.Open(keyring.Config{
-		ServiceName: serviceName,
-	})
+	ring, err := openKeyring()
 	if err != nil {
 		fmt.Printf("Error opening keyring: %v\n", err)
 		return
@@ -251,9 +261,7 @@ func logout() {
 }
 
 func getToken() (string, error) {
-	ring, err := keyring.Open(keyring.Config{
-		ServiceName: serviceName,
-	})
+	ring, err := openKeyring()
 	if err != nil {
 		return "", err
 	}
@@ -267,9 +275,7 @@ func getToken() (string, error) {
 }
 
 func getAppPassword() (appPwd, email string) {
-	ring, err := keyring.Open(keyring.Config{
-		ServiceName: serviceName,
-	})
+	ring, err := openKeyring()
 	if err != nil {
 		return "", ""
 	}

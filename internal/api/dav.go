@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"fm-cli/internal/model"
+	"github.com/scottatron/fm-cli/internal/model"
 
 	"github.com/emersion/go-ical"
 	"github.com/emersion/go-vcard"
@@ -19,10 +19,10 @@ import (
 
 // DAVClient holds CalDAV and CardDAV clients
 type DAVClient struct {
-	CalDAV       *caldav.Client
-	CardDAV      *carddav.Client
-	httpClient   webdav.HTTPClient
-	email        string
+	CalDAV     *caldav.Client
+	CardDAV    *carddav.Client
+	httpClient webdav.HTTPClient
+	email      string
 }
 
 // NewDAVClient creates CalDAV/CardDAV clients with app password auth
@@ -587,7 +587,7 @@ func (d *DAVClient) CreateContact(ctx context.Context, contact model.Contact) (s
 
 	uid := fmt.Sprintf("%d@fm-cli", time.Now().UnixNano())
 	card.SetValue(vcard.FieldUID, uid)
-	
+
 	// FN (Formatted Name) is required
 	fn := contact.FullName
 	if fn == "" {
@@ -687,7 +687,7 @@ func (d *DAVClient) UpdateContact(ctx context.Context, contact model.Contact) er
 
 	// Start with the existing card
 	card := objects[0].Card
-	
+
 	// Update the fields that can be edited
 	// FN (Formatted Name) is required
 	fn := contact.FullName
@@ -715,13 +715,13 @@ func (d *DAVClient) UpdateContact(ctx context.Context, contact model.Contact) er
 	} else {
 		delete(card, vcard.FieldNickname)
 	}
-	
+
 	if contact.Company != "" {
 		card.SetValue(vcard.FieldOrganization, contact.Company)
 	} else {
 		delete(card, vcard.FieldOrganization)
 	}
-	
+
 	if contact.JobTitle != "" {
 		card.SetValue(vcard.FieldTitle, contact.JobTitle)
 	} else {

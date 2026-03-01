@@ -9,9 +9,9 @@ import (
 	"strings"
 	"syscall"
 
-	"fm-cli/internal/api"
-	"fm-cli/internal/storage"
-	"fm-cli/internal/tui"
+	"github.com/scottatron/fm-cli/internal/api"
+	"github.com/scottatron/fm-cli/internal/storage"
+	"github.com/scottatron/fm-cli/internal/tui"
 
 	"github.com/99designs/keyring"
 	tea "github.com/charmbracelet/bubbletea"

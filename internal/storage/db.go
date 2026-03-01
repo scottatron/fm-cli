@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"fm-cli/internal/model"
+	"github.com/scottatron/fm-cli/internal/model"
 
 	_ "modernc.org/sqlite"
 )

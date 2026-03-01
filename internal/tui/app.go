@@ -11,10 +11,10 @@ import (
 	"strings"
 	"time"
 
-	"fm-cli/internal/api"
-	"fm-cli/internal/images"
-	"fm-cli/internal/model"
-	"fm-cli/internal/storage"
+	"github.com/scottatron/fm-cli/internal/api"
+	"github.com/scottatron/fm-cli/internal/images"
+	"github.com/scottatron/fm-cli/internal/model"
+	"github.com/scottatron/fm-cli/internal/storage"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"
@@ -50,16 +50,16 @@ type MainMenuItem struct {
 // Styles
 var (
 	// Base colors
-	primaryColor   = lipgloss.Color("#00D4AA")   // Bright teal
-	secondaryColor = lipgloss.Color("#FF6B9D")   // Pink
-	accentColor    = lipgloss.Color("#FFA500")   // Orange
-	successColor   = lipgloss.Color("#00E676")   // Green
-	warningColor   = lipgloss.Color("#FFD700")   // Gold
-	errorColor     = lipgloss.Color("#FF5252")   // Red
-	mutedColor     = lipgloss.Color("#6C757D")   // Gray
-	bgColor        = lipgloss.Color("#1A1B26")   // Dark bg
-	fgColor        = lipgloss.Color("#C0CAF5")   // Light fg
-	
+	primaryColor   = lipgloss.Color("#00D4AA") // Bright teal
+	secondaryColor = lipgloss.Color("#FF6B9D") // Pink
+	accentColor    = lipgloss.Color("#FFA500") // Orange
+	successColor   = lipgloss.Color("#00E676") // Green
+	warningColor   = lipgloss.Color("#FFD700") // Gold
+	errorColor     = lipgloss.Color("#FF5252") // Red
+	mutedColor     = lipgloss.Color("#6C757D") // Gray
+	bgColor        = lipgloss.Color("#1A1B26") // Dark bg
+	fgColor        = lipgloss.Color("#C0CAF5") // Light fg
+
 	appStyle = lipgloss.NewStyle().Padding(1, 2)
 
 	// Title and header styles
@@ -137,7 +137,7 @@ var (
 			Bold(true)
 
 	emailSubjectStyle = lipgloss.NewStyle().
-			Foreground(fgColor)
+				Foreground(fgColor)
 
 	emailDateStyle = lipgloss.NewStyle().
 			Foreground(accentColor).
@@ -305,32 +305,32 @@ type Model struct {
 	canLoadMore bool // If true, hitting bottom loads more
 
 	// Body View Data
-	bodyContent    string
-	htmlBody       string // Raw HTML for image rendering
-	showDetails    bool   // Toggle expanded headers
-	bodyViewport   viewport.Model
-	bodyScrollPos  int    // Track scroll position separately
+	bodyContent   string
+	htmlBody      string // Raw HTML for image rendering
+	showDetails   bool   // Toggle expanded headers
+	bodyViewport  viewport.Model
+	bodyScrollPos int // Track scroll position separately
 
 	// Composition Data
-	inputTo          textinput.Model
-	inputSubject     textinput.Model
-	composeBody      string
-	tempFile         string
-	draftID          string   // If editing a draft
-	identities       []string // Available sending identities (email addresses)
-	identityIdx      int      // Currently selected identity index
-	toSuggestions    []model.Contact // Autocomplete suggestions for To field
-	toSuggestionIdx  int             // Selected suggestion index
-	showSuggestions  bool            // Whether to show suggestions dropdown
+	inputTo         textinput.Model
+	inputSubject    textinput.Model
+	composeBody     string
+	tempFile        string
+	draftID         string          // If editing a draft
+	identities      []string        // Available sending identities (email addresses)
+	identityIdx     int             // Currently selected identity index
+	toSuggestions   []model.Contact // Autocomplete suggestions for To field
+	toSuggestionIdx int             // Selected suggestion index
+	showSuggestions bool            // Whether to show suggestions dropdown
 
 	// Calendar Data
 	calendars       []model.Calendar
 	calendarCursor  int
 	events          []model.CalendarEvent
 	eventCursor     int
-	agendaStart     time.Time // Start of agenda view (usually today)
-	agendaDays      int       // Number of days to show (default 7)
-	viewEventDetail bool      // Viewing event details
+	agendaStart     time.Time            // Start of agenda view (usually today)
+	agendaDays      int                  // Number of days to show (default 7)
+	viewEventDetail bool                 // Viewing event details
 	editingEvent    *model.CalendarEvent // Event being created/edited
 	eventInput      textinput.Model
 
@@ -339,16 +339,16 @@ type Model struct {
 	addressBookCursor int
 	contacts          []model.Contact
 	contactCursor     int
-	contactOffset     int        // Scroll offset for contacts
-	viewContactDetail bool       // Viewing contact details
+	contactOffset     int            // Scroll offset for contacts
+	viewContactDetail bool           // Viewing contact details
 	editingContact    *model.Contact // Contact being created/edited
 	contactInput      textinput.Model
 	contactEditField  int // Which field is being edited
 
 	// Search
 	searchInput   textinput.Model
-	searchActive  bool   // Whether search mode is active
-	searchQuery   string // Current search filter
+	searchActive  bool          // Whether search mode is active
+	searchQuery   string        // Current search filter
 	searchResults []model.Email // Global search results
 	searchCursor  int           // Cursor for search results
 
@@ -605,7 +605,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.err = msg
 		m.loading = false
 		return m, nil
-	
+
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
@@ -618,7 +618,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// Handle Search Mode
 	if m.searchActive {
 		m.searchInput, cmd = m.searchInput.Update(msg)
-		
+
 		switch msg := msg.(type) {
 		case tea.KeyMsg:
 			switch msg.Type {
@@ -664,7 +664,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// Handle Calendar Event Editing
 	if m.state == viewCalendar && m.editingEvent != nil {
 		m.eventInput, cmd = m.eventInput.Update(msg)
-		
+
 		switch msg := msg.(type) {
 		case tea.KeyMsg:
 			switch msg.Type {
@@ -698,7 +698,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// Handle Contact Editing
 	if m.state == viewContacts && m.editingContact != nil {
 		m.contactInput, cmd = m.contactInput.Update(msg)
-		
+
 		switch msg := msg.(type) {
 		case tea.KeyMsg:
 			switch msg.Type {
@@ -726,10 +726,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				case 4: // Notes
 					m.editingContact.Notes = m.contactInput.Value()
 				}
-				
+
 				// Move to next field
 				m.contactEditField = (m.contactEditField + 1) % 5
-				
+
 				// Set input value for new field
 				switch m.contactEditField {
 				case 0:
@@ -781,7 +781,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				case 4:
 					m.editingContact.Notes = m.contactInput.Value()
 				}
-				
+
 				// Save the contact
 				if m.editingContact.FullName == "" {
 					m.err = fmt.Errorf("contact name cannot be empty")
@@ -809,7 +809,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		oldValue := m.inputTo.Value()
 		m.inputTo, cmd = m.inputTo.Update(msg)
 		newValue := m.inputTo.Value()
-		
+
 		// Update suggestions when input changes
 		if oldValue != newValue && len(newValue) >= 1 {
 			m.toSuggestions = filterContacts(m.contacts, newValue)
@@ -819,7 +819,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.toSuggestions = nil
 			m.showSuggestions = false
 		}
-		
+
 		switch msg := msg.(type) {
 		case tea.KeyMsg:
 			switch msg.Type {
@@ -889,7 +889,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	if m.state == viewComposeSubject {
 		m.inputSubject, cmd = m.inputSubject.Update(msg)
-		
+
 		switch msg := msg.(type) {
 		case tea.KeyMsg:
 			switch msg.Type {
@@ -900,7 +900,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.err = err
 					return m, nil
 				}
-				
+
 				// Write existing body content to file if available
 				if m.composeBody != "" {
 					if _, err := f.WriteString(m.composeBody); err != nil {
@@ -909,7 +909,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						return m, nil
 					}
 				}
-				
+
 				m.tempFile = f.Name()
 				f.Close()
 
@@ -994,7 +994,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "ctrl+c":
 			return m, tea.Quit
-		
+
 		case "q":
 			// Only quit from main menu
 			if m.state == viewMainMenu {
@@ -1127,7 +1127,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.emails[m.emailCursor].IsFlagged = newState
 				return m, toggleFlaggedCmd(m.client, selectedEmail.ID, newState)
 			}
-		
+
 		case "e":
 			if m.state == viewEmails && len(m.emails) > 0 {
 				targetMBID := ""
@@ -1143,7 +1143,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.loading = true
 					selectedEmail := m.emails[m.emailCursor]
 					currentMBID := m.mailboxes[m.mbCursor].ID
-					
+
 					// Optimistic UI update
 					if m.emailCursor < len(m.emails)-1 {
 						m.emails = append(m.emails[:m.emailCursor], m.emails[m.emailCursor+1:]...)
@@ -1153,7 +1153,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 							m.emailCursor--
 						}
 					}
-					
+
 					return m, moveEmailCmd(m.client, selectedEmail.ID, currentMBID, targetMBID)
 				}
 			} else if m.state == viewBody {
@@ -1165,14 +1165,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						m.draftID = selectedEmail.ID
 						m.inputTo.SetValue(selectedEmail.To)
 						m.inputSubject.SetValue(selectedEmail.Subject)
-						
+
 						// Prepare body
 						body := m.bodyContent
 						if strings.HasPrefix(body, "[Converted HTML]\n") {
 							body = strings.TrimPrefix(body, "[Converted HTML]\n")
 						}
 						m.composeBody = body
-						
+
 						// Determine focus
 						if m.inputTo.Value() == "" {
 							m.state = viewComposeTo
@@ -1455,7 +1455,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if pageHeight > 20 {
 					pageHeight = 20
 				}
-				
+
 				if m.contactCursor < len(m.contacts)-1 {
 					m.contactCursor++
 					if m.contactCursor >= m.contactOffset+pageHeight {
@@ -1565,7 +1565,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				} else if selectedItem.State == viewContacts && !m.offlineMode && m.client != nil && m.davClient != nil {
 					m.loading = true
 					m.contactCursor = 0
-				m.contactOffset = 0
+					m.contactOffset = 0
 					if len(m.addressBooks) == 0 {
 						return m, fetchAddressBooksCmd(m.davClient)
 					}
@@ -1809,20 +1809,20 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.bodyContent = msg.body
 		m.htmlBody = msg.htmlBody
 		m.loading = false
-		
+
 		// Update viewport with rendered content
 		if m.state == viewBody && len(m.emails) > m.emailCursor {
 			updateBodyViewport(&m)
 		}
-		
+
 		// If we are loading a draft to edit:
 		if m.draftID != "" && (m.state == viewComposeTo || m.state == viewEmails) {
 			// We came here from selecting a draft
 			// Clean up "To" field (remove Name <Email> format to just Email if possible, or leave it)
-			// JMAP usually handles Name <Email> in To field ok on sending? 
+			// JMAP usually handles Name <Email> in To field ok on sending?
 			// Actually our SendEmail uses Email struct which parses it or expects raw.
 			// Ideally we should parse it. For now, leave as is.
-			
+
 			// Clean body: Remove [Converted HTML] header if present?
 			// Since we want to edit the raw text.
 			// The fetchEmailBody returns converted text.
@@ -1833,7 +1833,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				body = strings.TrimPrefix(body, "[Converted HTML]\n")
 			}
 			m.composeBody = body
-			
+
 			// Determine where to focus
 			if m.inputTo.Value() == "" {
 				m.state = viewComposeTo
@@ -1975,12 +1975,12 @@ func updateBodyViewport(m *Model) {
 	if len(m.emails) <= m.emailCursor {
 		return
 	}
-	
+
 	e := m.emails[m.emailCursor]
 	var content strings.Builder
-	
+
 	content.WriteString(fmt.Sprintf("Subject: %s\nFrom:    %s\nDate:    %s\n", e.Subject, e.From, e.Date))
-	
+
 	if m.showDetails {
 		if e.To != "" {
 			content.WriteString(fmt.Sprintf("To:      %s\n", e.To))
@@ -1997,9 +1997,9 @@ func updateBodyViewport(m *Model) {
 		content.WriteString(fmt.Sprintf("ID:      %s\n", e.ID))
 		content.WriteString(fmt.Sprintf("Mailboxes: %v\n", e.MailboxIDs))
 	}
-	
+
 	content.WriteString("--------------------------------------------------\n\n")
-	
+
 	// Initialize viewport with sensible defaults
 	width := m.width
 	height := m.height - 4
@@ -2009,7 +2009,7 @@ func updateBodyViewport(m *Model) {
 	if height <= 0 {
 		height = 20
 	}
-	
+
 	// Use actual viewport width for word wrapping
 	wrapWidth := width - 4 // Leave some margin
 	if wrapWidth < 40 {
@@ -2017,7 +2017,7 @@ func updateBodyViewport(m *Model) {
 	}
 	bodyText := renderEmailBody(m.bodyContent, m.htmlBody, wrapWidth)
 	content.WriteString(wrapTextParagraphs(bodyText, wrapWidth))
-	
+
 	m.bodyViewport = viewport.New(width, height)
 	m.bodyViewport.SetContent(content.String())
 	m.bodyViewport.GotoTop()
@@ -2029,7 +2029,7 @@ func shortenURL(url string, maxLen int) string {
 	if len(url) <= maxLen {
 		return url
 	}
-	
+
 	// Try to extract domain and show domain + "..."
 	// e.g., https://click.redditmail.com/CL0/https%3A... -> click.redditmail.com/...
 	re := regexp.MustCompile(`^(https?://)([^/]+)(.*)$`)
@@ -2037,7 +2037,7 @@ func shortenURL(url string, maxLen int) string {
 	if matches != nil {
 		domain := matches[2]
 		path := matches[3]
-		
+
 		// If domain alone is short enough, show domain + truncated path
 		if len(domain) < maxLen-4 {
 			remaining := maxLen - len(domain) - 4 // 4 for "..." and "/"
@@ -2051,7 +2051,7 @@ func shortenURL(url string, maxLen int) string {
 		}
 		return domain[:maxLen-3] + "..."
 	}
-	
+
 	return url[:maxLen-3] + "..."
 }
 
@@ -2080,10 +2080,10 @@ func htmlToText(htmlContent string) string {
 	if err != nil {
 		return stripHTMLFallback(htmlContent)
 	}
-	
+
 	var buf strings.Builder
 	var extractText func(*html.Node)
-	
+
 	// Helper to get attribute value
 	getAttr := func(n *html.Node, key string) string {
 		for _, attr := range n.Attr {
@@ -2093,7 +2093,7 @@ func htmlToText(htmlContent string) string {
 		}
 		return ""
 	}
-	
+
 	extractText = func(n *html.Node) {
 		// Skip style, script, head elements entirely
 		if n.Type == html.ElementNode {
@@ -2126,7 +2126,7 @@ func htmlToText(htmlContent string) string {
 						}
 					}
 					extractLinkText(n)
-					
+
 					text := strings.TrimSpace(linkText.String())
 					if text != "" && text != href && !strings.HasPrefix(text, "http") {
 						// Show as "text (shortened_url)"
@@ -2143,7 +2143,7 @@ func htmlToText(htmlContent string) string {
 				}
 			}
 		}
-		
+
 		if n.Type == html.TextNode {
 			text := strings.TrimSpace(n.Data)
 			if text != "" {
@@ -2151,11 +2151,11 @@ func htmlToText(htmlContent string) string {
 				buf.WriteString(" ")
 			}
 		}
-		
+
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			extractText(c)
 		}
-		
+
 		// Add newline after block elements
 		if n.Type == html.ElementNode {
 			switch n.Data {
@@ -2164,11 +2164,11 @@ func htmlToText(htmlContent string) string {
 			}
 		}
 	}
-	
+
 	extractText(doc)
-	
+
 	result := buf.String()
-	
+
 	// Clean up whitespace
 	reSpaces := regexp.MustCompile(`[ \t]+`)
 	result = reSpaces.ReplaceAllString(result, " ")
@@ -2176,13 +2176,13 @@ func htmlToText(htmlContent string) string {
 	result = reNewlines.ReplaceAllString(result, "\n")
 	reMultiNewlines := regexp.MustCompile(`\n{3,}`)
 	result = reMultiNewlines.ReplaceAllString(result, "\n\n")
-	
+
 	// Remove zero-width characters often used in spam
 	result = strings.ReplaceAll(result, "\u200b", "") // zero-width space
 	result = strings.ReplaceAll(result, "\u200c", "") // zero-width non-joiner
 	result = strings.ReplaceAll(result, "\u200d", "") // zero-width joiner
 	result = strings.ReplaceAll(result, "\ufeff", "") // BOM
-	
+
 	return strings.TrimSpace(result)
 }
 
@@ -2193,62 +2193,62 @@ func stripHTMLFallback(htmlContent string) string {
 	htmlContent = reStyle.ReplaceAllString(htmlContent, "")
 	reScript := regexp.MustCompile(`(?is)<script[^>]*>.*?</script>`)
 	htmlContent = reScript.ReplaceAllString(htmlContent, "")
-	
+
 	// Replace common block elements with newlines
 	reBlock := regexp.MustCompile(`(?i)</(p|div|tr|li|h[1-6])>`)
 	htmlContent = reBlock.ReplaceAllString(htmlContent, "\n")
 	reBr := regexp.MustCompile(`(?i)<br\s*/?>`)
 	htmlContent = reBr.ReplaceAllString(htmlContent, "\n")
-	
+
 	// Remove all remaining tags
 	reTags := regexp.MustCompile(`<[^>]+>`)
 	htmlContent = reTags.ReplaceAllString(htmlContent, "")
-	
+
 	// Decode common HTML entities
 	htmlContent = html.UnescapeString(htmlContent)
-	
+
 	// Collapse whitespace
 	reSpaces := regexp.MustCompile(`[ \t]+`)
 	htmlContent = reSpaces.ReplaceAllString(htmlContent, " ")
 	reNewlines := regexp.MustCompile(`\n{3,}`)
 	htmlContent = reNewlines.ReplaceAllString(htmlContent, "\n\n")
-	
+
 	return strings.TrimSpace(htmlContent)
 }
 
 // renderEmailBody renders the email body, converting HTML to plain text
 func renderEmailBody(textBody, htmlBody string, width int) string {
 	// Check if textBody looks like HTML (contains HTML tags)
-	isHTMLBody := strings.Contains(textBody, "<html") || 
-		strings.Contains(textBody, "<table") || 
+	isHTMLBody := strings.Contains(textBody, "<html") ||
+		strings.Contains(textBody, "<table") ||
 		strings.Contains(textBody, "<div") ||
 		strings.Contains(textBody, "<td") ||
 		strings.Contains(textBody, "<!DOCTYPE")
-	
+
 	// If we have clean text body (not HTML), prefer it
 	if textBody != "" && !strings.HasPrefix(textBody, "[Converted HTML]") && !isHTMLBody {
 		return linkify(textBody)
 	}
-	
+
 	// For HTML content, convert to plain text
 	// Try htmlBody first, then textBody if it's HTML
 	contentToConvert := htmlBody
 	if contentToConvert == "" && isHTMLBody {
 		contentToConvert = textBody
 	}
-	
+
 	if contentToConvert != "" {
 		text := htmlToText(contentToConvert)
 		if text != "" {
 			return linkify(text)
 		}
 	}
-	
+
 	// Fall back to text body with linkify (even if it's converted HTML)
 	if textBody != "" {
 		return linkify(textBody)
 	}
-	
+
 	return "(No content)"
 }
 
@@ -2257,11 +2257,11 @@ func wrapText(text string, maxWidth int) string {
 	if len(text) <= maxWidth {
 		return text
 	}
-	
+
 	var result strings.Builder
 	words := strings.Fields(text)
 	lineLen := 0
-	
+
 	for i, word := range words {
 		wordLen := len(word)
 		if lineLen > 0 && lineLen+wordLen+1 > maxWidth {
@@ -2274,14 +2274,14 @@ func wrapText(text string, maxWidth int) string {
 		}
 		result.WriteString(word)
 		lineLen += wordLen
-		
+
 		// Handle very long words
 		if wordLen > maxWidth && i < len(words)-1 {
 			result.WriteString("\n")
 			lineLen = 0
 		}
 	}
-	
+
 	return result.String()
 }
 
@@ -2290,29 +2290,29 @@ func wrapTextParagraphs(text string, maxWidth int) string {
 	if maxWidth <= 0 {
 		return text
 	}
-	
+
 	var result strings.Builder
 	paragraphs := strings.Split(text, "\n")
-	
+
 	for i, para := range paragraphs {
 		para = strings.TrimSpace(para)
-		
+
 		// Empty lines (paragraph breaks) are preserved
 		if para == "" {
 			result.WriteString("\n")
 			continue
 		}
-		
+
 		// Wrap the paragraph
 		wrapped := wrapText(para, maxWidth)
 		result.WriteString(wrapped)
-		
+
 		// Add newline after paragraph unless it's the last one
 		if i < len(paragraphs)-1 {
 			result.WriteString("\n")
 		}
 	}
-	
+
 	return result.String()
 }
 
@@ -2324,17 +2324,17 @@ func (m Model) View() string {
 		if maxWidth < 40 {
 			maxWidth = 40
 		}
-		
+
 		wrapped := wrapText(errMsg, maxWidth)
 		return wrapped + "\n\nPress any key to continue..."
 	}
 
 	s := strings.Builder{}
-	
+
 	// Header with app title
 	header := titleStyle.Render(" ✉ FM-CLI ")
 	s.WriteString(header)
-	
+
 	// Show offline indicator
 	if m.offlineMode {
 		s.WriteString(" " + errorBadgeStyle.Render("OFFLINE"))
@@ -2385,7 +2385,7 @@ func (m Model) View() string {
 				cursor = "▶ "
 				style = selectedMailboxStyle
 			}
-			
+
 			// Icon for each menu item
 			icon := ""
 			switch item.State {
@@ -2400,7 +2400,7 @@ func (m Model) View() string {
 			case viewSettings:
 				icon = "⚙ "
 			}
-			
+
 			label := fmt.Sprintf("%s%s %s", cursor, icon, item.Name)
 			shortcut := badgeStyle.Render(item.Shortcut)
 			s.WriteString(style.Render(label) + " " + shortcut + "\n")
@@ -2417,7 +2417,7 @@ func (m Model) View() string {
 		for i, mb := range m.mailboxes {
 			cursor := "  "
 			style := mailboxStyle
-			
+
 			if i == m.mbCursor {
 				cursor = "▶ "
 				style = selectedMailboxStyle
@@ -2431,7 +2431,7 @@ func (m Model) View() string {
 			} else {
 				unreadBadge = " " + statusStyle.Render(" 0 ")
 			}
-			
+
 			s.WriteString(style.Render(label) + unreadBadge + "\n")
 		}
 		s.WriteString("\n" + helpStyle.Render("↑↓:navigate  ⏎:open  "+keyStyle.Render("r")+":refresh  "+keyStyle.Render("c")+":compose"))
@@ -2503,7 +2503,7 @@ func (m Model) View() string {
 					indicator = "● "
 					textStyle = unreadStyle
 				}
-				
+
 				// Flag indicator
 				flagMarker := ""
 				if e.IsFlagged {
@@ -2516,7 +2516,7 @@ func (m Model) View() string {
 					fromStr = fromStr[:22] + "..."
 				}
 				fromStr = emailFromStyle.Render(fromStr)
-				
+
 				// Subject
 				subjectStr := e.Subject
 				if len(subjectStr) > 50 {
@@ -2526,7 +2526,7 @@ func (m Model) View() string {
 
 				// Build line with date and content
 				line := fmt.Sprintf("%s%s%s%-28s %s", cursor, indicator, flagMarker, fromStr, subjectStr)
-				
+
 				// Apply unread/read styling to the whole line
 				if e.IsUnread {
 					line = textStyle.Render(line)
@@ -2535,7 +2535,7 @@ func (m Model) View() string {
 				s.WriteString(style.Render(line) + "\n")
 			}
 		}
-		
+
 		// Help text at bottom
 		help := []string{
 			keyStyle.Render("h/esc") + ":back",
@@ -2549,7 +2549,7 @@ func (m Model) View() string {
 			keyStyle.Render("c") + ":compose",
 		}
 		s.WriteString("\n" + helpStyle.Render(strings.Join(help, "  ")))
-	
+
 	} else if m.state == viewBody {
 		if m.loading {
 			s.WriteString("Loading content...\n")
@@ -2557,9 +2557,9 @@ func (m Model) View() string {
 			// Build the email content
 			e := m.emails[m.emailCursor]
 			var content strings.Builder
-			
+
 			content.WriteString(fmt.Sprintf("Subject: %s\nFrom:    %s\nDate:    %s\n", e.Subject, e.From, e.Date))
-			
+
 			if m.showDetails {
 				if e.To != "" {
 					content.WriteString(fmt.Sprintf("To:      %s\n", e.To))
@@ -2576,9 +2576,9 @@ func (m Model) View() string {
 				content.WriteString(fmt.Sprintf("ID:      %s\n", e.ID))
 				content.WriteString(fmt.Sprintf("Mailboxes: %v\n", e.MailboxIDs))
 			}
-			
+
 			content.WriteString("--------------------------------------------------\n\n")
-			
+
 			// Use actual width for word wrapping
 			wrapWidth := m.width - 4
 			if wrapWidth < 40 {
@@ -2586,16 +2586,16 @@ func (m Model) View() string {
 			}
 			bodyText := renderEmailBody(m.bodyContent, m.htmlBody, wrapWidth)
 			content.WriteString(wrapTextParagraphs(bodyText, wrapWidth))
-			
+
 			// Split content into lines and handle scrolling manually
 			allLines := strings.Split(content.String(), "\n")
 			totalLines := len(allLines)
-			
+
 			viewHeight := m.height - 4
 			if viewHeight <= 0 {
 				viewHeight = 20
 			}
-			
+
 			// Clamp scroll position
 			scrollPos := m.bodyScrollPos
 			maxScroll := totalLines - viewHeight
@@ -2608,20 +2608,20 @@ func (m Model) View() string {
 			if scrollPos < 0 {
 				scrollPos = 0
 			}
-			
+
 			// Get visible lines
 			endLine := scrollPos + viewHeight
 			if endLine > totalLines {
 				endLine = totalLines
 			}
 			visibleLines := allLines[scrollPos:endLine]
-			
+
 			// Build output
 			for _, line := range visibleLines {
 				s.WriteString(line)
 				s.WriteString("\n")
 			}
-			
+
 			// Show scroll position
 			scrollInfo := ""
 			if totalLines > viewHeight {
@@ -2631,7 +2631,7 @@ func (m Model) View() string {
 				}
 				scrollInfo = fmt.Sprintf(" [line %d/%d, %d%%]", scrollPos+1, totalLines, pct)
 			}
-			
+
 			help := fmt.Sprintf("\n(h/esc: back, j/k/↑/↓: scroll, R: reply, A: reply all, F: forward, m: details, b: browser%s", scrollInfo)
 			if images.HasGraphicsSupport() {
 				help += ", i: images)"
@@ -2652,7 +2652,7 @@ func (m Model) View() string {
 		}
 		s.WriteString("From: " + fromAddr + "  [Tab to change]\n")
 		s.WriteString("To: " + m.inputTo.View() + "\n")
-		
+
 		// Show autocomplete suggestions
 		if m.showSuggestions && len(m.toSuggestions) > 0 {
 			s.WriteString("\n")
@@ -2697,13 +2697,13 @@ func (m Model) View() string {
 		s.WriteString("To: " + m.inputTo.Value() + "\n")
 		s.WriteString("Subject: " + m.inputSubject.Value() + "\n")
 		s.WriteString("Body Preview:\n")
-		
+
 		preview := m.composeBody
 		if len(preview) > 100 {
 			preview = preview[:100] + "..."
 		}
 		s.WriteString(preview + "\n")
-		
+
 		if m.loading {
 			s.WriteString("\nSENDING...\n")
 		} else {
@@ -2712,7 +2712,7 @@ func (m Model) View() string {
 
 	} else if m.state == viewCalendar {
 		s.WriteString(subtitleStyle.Render("📅 Calendar - Agenda") + "\n\n")
-		
+
 		// Show search bar if active or filter is set
 		if m.searchActive {
 			s.WriteString(inputFocusedStyle.Render(m.searchInput.View()) + "\n\n")
@@ -2723,7 +2723,7 @@ func (m Model) View() string {
 
 		// Apply filter
 		displayEvents := filterEvents(m.events, m.searchQuery)
-		
+
 		if m.loading {
 			s.WriteString(statusStyle.Render(" Loading calendar... "))
 		} else if m.editingEvent != nil {
@@ -2733,7 +2733,7 @@ func (m Model) View() string {
 				title = "✏️  Edit Event"
 			}
 			s.WriteString(subtitleStyle.Render(title) + "\n\n")
-			
+
 			s.WriteString(contactFieldLabelStyle.Render("Title: ") + inputFocusedStyle.Render(m.eventInput.View()) + "\n")
 			s.WriteString(contactFieldLabelStyle.Render("Date: ") + contactFieldValueStyle.Render(m.editingEvent.Start.Format("2006-01-02")) + "\n")
 			s.WriteString(contactFieldLabelStyle.Render("Time: ") + contactFieldValueStyle.Render(m.editingEvent.Start.Format("15:04")) + "\n")
@@ -2747,11 +2747,11 @@ func (m Model) View() string {
 		} else if m.viewEventDetail && m.eventCursor < len(m.events) {
 			// Viewing event details
 			e := m.events[m.eventCursor]
-			
+
 			// Title with box
 			titleBox := boxStyle.Render(eventTitleStyle.Render(e.Title))
 			s.WriteString(titleBox + "\n\n")
-			
+
 			s.WriteString(contactFieldLabelStyle.Render("📅 Date: ") + contactFieldValueStyle.Render(e.Start.Format("Monday, January 2, 2006")) + "\n")
 			if e.IsAllDay {
 				s.WriteString(contactFieldLabelStyle.Render("🕐 Time: ") + badgeStyle.Render("All Day") + "\n")
@@ -2800,7 +2800,7 @@ func (m Model) View() string {
 			// Agenda view
 			today := time.Now().Truncate(24 * time.Hour)
 			currentDate := time.Time{}
-			
+
 			// Find the actual cursor position in filtered list
 			cursorInFiltered := -1
 			if m.eventCursor < len(m.events) {
@@ -2812,15 +2812,15 @@ func (m Model) View() string {
 					}
 				}
 			}
-			
+
 			for i, e := range displayEvents {
 				eventDate := e.Start.Truncate(24 * time.Hour)
-				
+
 				// Print date header if new day
 				if eventDate != currentDate {
 					currentDate = eventDate
 					s.WriteString("\n")
-					
+
 					dateStr := eventDate.Format("Monday, January 2")
 					dateStyle := eventDateHeaderStyle
 					if eventDate.Equal(today) {
@@ -2829,25 +2829,25 @@ func (m Model) View() string {
 					} else if eventDate.Equal(today.AddDate(0, 0, 1)) {
 						dateStr += " Tomorrow"
 					}
-					s.WriteString(dateStyle.Render(" " + dateStr + " ") + "\n")
+					s.WriteString(dateStyle.Render(" "+dateStr+" ") + "\n")
 				}
-				
+
 				// Event line
 				cursor := "  "
 				style := emailItemStyle
-				
+
 				// Check if this is the selected event
 				if i == cursorInFiltered {
 					cursor = "▶ "
 					style = selectedEmailItemStyle
 				}
-				
+
 				timeStr := e.Start.Format("15:04")
 				timeBadge := eventTimeStyle.Render(timeStr)
 				if e.IsAllDay {
 					timeBadge = badgeStyle.Render("All Day")
 				}
-				
+
 				titleStr := eventTitleStyle.Render(e.Title)
 				line := fmt.Sprintf("%s%s  %s", cursor, timeBadge, titleStr)
 				if e.Location != "" {
@@ -2855,7 +2855,7 @@ func (m Model) View() string {
 				}
 				s.WriteString(style.Render(line) + "\n")
 			}
-			
+
 			help := []string{
 				keyStyle.Render("↑↓") + ":navigate",
 				keyStyle.Render("⏎") + ":view",
@@ -2869,7 +2869,7 @@ func (m Model) View() string {
 
 	} else if m.state == viewContacts {
 		s.WriteString(subtitleStyle.Render("👤 Contacts") + "\n\n")
-		
+
 		// Show search bar if active or filter is set
 		if m.searchActive {
 			s.WriteString(inputFocusedStyle.Render(m.searchInput.View()) + "\n\n")
@@ -2880,7 +2880,7 @@ func (m Model) View() string {
 
 		// Apply filter
 		displayContacts := filterContactsAll(m.contacts, m.searchQuery)
-		
+
 		if m.loading {
 			s.WriteString(statusStyle.Render(" Loading contacts... "))
 		} else if m.editingContact != nil {
@@ -2890,7 +2890,7 @@ func (m Model) View() string {
 				title = "✏️  Edit Contact"
 			}
 			s.WriteString(subtitleStyle.Render(title) + "\n\n")
-			
+
 			fields := []struct {
 				label string
 				value string
@@ -2908,7 +2908,7 @@ func (m Model) View() string {
 			if len(m.editingContact.Phones) > 0 {
 				fields[2].value = m.editingContact.Phones[0].Number
 			}
-			
+
 			for i, f := range fields {
 				cursor := "  "
 				if i == m.contactEditField {
@@ -2925,11 +2925,11 @@ func (m Model) View() string {
 		} else if m.viewContactDetail && m.contactCursor < len(m.contacts) {
 			// Viewing contact details
 			c := m.contacts[m.contactCursor]
-			
+
 			// Name with box
 			nameBox := boxStyle.Render(contactNameStyle.Render(c.FullName))
 			s.WriteString(nameBox + "\n\n")
-			
+
 			if c.Nickname != "" {
 				s.WriteString(contactFieldLabelStyle.Render("Nickname: ") + contactFieldValueStyle.Render(c.Nickname) + "\n")
 			}
@@ -2943,7 +2943,7 @@ func (m Model) View() string {
 				}
 				s.WriteString(contactFieldLabelStyle.Render("🏢 Work: ") + contactFieldValueStyle.Render(workInfo) + "\n")
 			}
-			
+
 			if len(c.Emails) > 0 {
 				s.WriteString("\n" + contactFieldLabelStyle.Render("✉️  Emails:") + "\n")
 				for _, e := range c.Emails {
@@ -2952,7 +2952,7 @@ func (m Model) View() string {
 					s.WriteString(fmt.Sprintf("  %s %s\n", typeLabel, email))
 				}
 			}
-			
+
 			if len(c.Phones) > 0 {
 				s.WriteString("\n" + contactFieldLabelStyle.Render("📞 Phones:") + "\n")
 				for _, p := range c.Phones {
@@ -2961,7 +2961,7 @@ func (m Model) View() string {
 					s.WriteString(fmt.Sprintf("  %s %s\n", typeLabel, phone))
 				}
 			}
-			
+
 			if len(c.Addresses) > 0 {
 				s.WriteString("\n" + contactFieldLabelStyle.Render("📍 Addresses:") + "\n")
 				for _, a := range c.Addresses {
@@ -2971,11 +2971,11 @@ func (m Model) View() string {
 					s.WriteString(fmt.Sprintf("  %s %s\n", typeLabel, contactFieldValueStyle.Render(addr)))
 				}
 			}
-			
+
 			if c.Birthday != "" {
 				s.WriteString("\n" + contactFieldLabelStyle.Render("🎂 Birthday: ") + contactFieldValueStyle.Render(c.Birthday) + "\n")
 			}
-			
+
 			if c.Notes != "" {
 				s.WriteString("\n" + contactFieldLabelStyle.Render("📝 Notes:") + "\n")
 				s.WriteString(boxStyle.Render(c.Notes) + "\n")
@@ -3005,47 +3005,47 @@ func (m Model) View() string {
 			if m.searchQuery != "" {
 				contactsToShow = displayContacts
 			}
-			
+
 			// Calculate visible window - be very conservative
-			pageHeight := 10  // Default to 10 items
+			pageHeight := 10 // Default to 10 items
 			if m.height > 15 {
-				pageHeight = m.height - 12  // Reserve space for header/footer
+				pageHeight = m.height - 12 // Reserve space for header/footer
 			}
 			if pageHeight < 5 {
 				pageHeight = 5
 			}
 			if pageHeight > 20 {
-				pageHeight = 20  // Cap at 20 items max
+				pageHeight = 20 // Cap at 20 items max
 			}
-			
+
 			// Reset offset if it's beyond the list
 			if m.contactOffset >= len(contactsToShow) {
 				m.contactOffset = 0
 			}
-			
+
 			// Use simple offset-based scrolling
 			start := m.contactOffset
 			end := start + pageHeight
 			if end > len(contactsToShow) {
 				end = len(contactsToShow)
 			}
-			
+
 			// Show position indicator
 			if m.searchQuery != "" {
 				s.WriteString(fmt.Sprintf("Showing %d-%d of %d (filtered from %d)\n\n", start+1, end, len(contactsToShow), len(m.contacts)))
 			} else {
 				s.WriteString(fmt.Sprintf("Showing %d-%d of %d\n\n", start+1, end, len(contactsToShow)))
 			}
-			
+
 			for i := start; i < end; i++ {
 				c := contactsToShow[i]
-				
+
 				// Format: Name <email> | phone
 				name := c.FullName
 				if name == "" {
 					name = "(No name)"
 				}
-				
+
 				var line string
 				if i == m.contactCursor {
 					// Selected - use plain text so background color shows through
@@ -3069,7 +3069,7 @@ func (m Model) View() string {
 					s.WriteString(emailItemStyle.Render(line) + "\n")
 				}
 			}
-			
+
 			help := []string{
 				keyStyle.Render("↑↓") + ":navigate",
 				keyStyle.Render("⏎") + ":view",
@@ -3083,7 +3083,7 @@ func (m Model) View() string {
 
 	} else if m.state == viewSearch {
 		s.WriteString("Search All Mail\n\n")
-		
+
 		// Show search input if active
 		if m.searchActive {
 			s.WriteString(m.searchInput.View() + "\n\n")
@@ -3098,7 +3098,7 @@ func (m Model) View() string {
 			s.WriteString("\n(/ to search again, esc/0 to go back)")
 		} else {
 			s.WriteString(fmt.Sprintf("Results for: %s (%d found)\n\n", m.searchQuery, len(m.searchResults)))
-			
+
 			// Render search results like emails
 			headerHeight := 7
 			footerHeight := 2
@@ -3144,16 +3144,16 @@ func (m Model) View() string {
 
 	} else if m.state == viewSettings {
 		s.WriteString("Settings\n\n")
-		
+
 		offlineStatus := "OFF"
 		if m.offlineMode {
 			offlineStatus = "ON"
 		}
-		
+
 		settings := []string{
 			fmt.Sprintf("  Offline Mode: %s", offlineStatus),
 		}
-		
+
 		for i, setting := range settings {
 			cursor := " "
 			if i == m.settingsCursor {
@@ -3161,7 +3161,7 @@ func (m Model) View() string {
 			}
 			s.WriteString(fmt.Sprintf("%s%s\n", cursor, setting))
 		}
-		
+
 		s.WriteString("\n(enter to toggle, 0: back to menu)")
 	}
 

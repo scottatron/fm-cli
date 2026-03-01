@@ -10,6 +10,8 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/godbus/dbus"
+
 	"github.com/scottatron/fm-cli/internal/api"
 	"github.com/scottatron/fm-cli/internal/storage"
 	"github.com/scottatron/fm-cli/internal/tui"
@@ -43,6 +45,9 @@ func main() {
 			return
 		case "debug":
 			debugSession()
+			return
+		case "debug-keyring":
+			debugKeyring()
 			return
 		case "list":
 			runListCommand()
@@ -142,6 +147,7 @@ func printHelp() {
 	fmt.Println("  list      List resources (mailboxes|emails) as JSON")
 	fmt.Println("  get       Get resources (email <id>) as JSON")
 	fmt.Println("  search    Search emails by text as JSON")
+	fmt.Println("  debug-keyring  Print keyring/DBus diagnostics")
 	fmt.Println("  help      Show this help message")
 	fmt.Println("\nIf no command is provided, the TUI will start.")
 	fmt.Println("\nHeadless examples:")
@@ -243,6 +249,45 @@ func openKeyring() (keyring.Keyring, error) {
 	}
 
 	return keyring.Open(cfg)
+}
+
+func debugKeyring() {
+	fmt.Println("fm-cli keyring debug")
+	fmt.Println("===================")
+	fmt.Printf("GOOS=%s\n", runtime.GOOS)
+	fmt.Printf("DBUS_SESSION_BUS_ADDRESS=%q\n", os.Getenv("DBUS_SESSION_BUS_ADDRESS"))
+	fmt.Printf("XDG_RUNTIME_DIR=%q\n", os.Getenv("XDG_RUNTIME_DIR"))
+
+	keyring.Debug = true
+	backends := keyring.AvailableBackends()
+	fmt.Printf("keyring.AvailableBackends=%v\n", backends)
+
+	if runtime.GOOS == "linux" {
+		if _, err := dbus.SessionBus(); err != nil {
+			fmt.Printf("dbus.SessionBus() error: %v\n", err)
+		} else {
+			fmt.Println("dbus.SessionBus() OK")
+		}
+	}
+
+	fmt.Println("\nAttempt: open default keyring config")
+	if _, err := keyring.Open(keyring.Config{ServiceName: serviceName}); err != nil {
+		fmt.Printf("default open error: %v\n", err)
+	} else {
+		fmt.Println("default open: OK")
+	}
+
+	fmt.Println("\nAttempt: open forced secret-service config")
+	cfg := keyring.Config{
+		ServiceName:             serviceName,
+		AllowedBackends:         []keyring.BackendType{keyring.SecretServiceBackend},
+		LibSecretCollectionName: "login",
+	}
+	if _, err := keyring.Open(cfg); err != nil {
+		fmt.Printf("forced secret-service open error: %v\n", err)
+	} else {
+		fmt.Println("forced secret-service open: OK")
+	}
 }
 
 func logout() {

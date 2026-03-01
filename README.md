@@ -147,6 +147,7 @@ export FM_APP_PASSWORD="your-app-password"  # Optional
 | `fm-cli get email <email-id>` | Get email body as JSON |
 | `fm-cli search --query "invoice" --limit 20` | Search emails as JSON |
 | `fm-cli debug` | Show debug info (JMAP session, CalDAV/CardDAV status) |
+| `fm-cli debug-keyring` | Show keyring + D-Bus diagnostics |
 | `fm-cli help` | Show help |
 
 ### Offline Mode

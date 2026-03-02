@@ -245,7 +245,8 @@ func openKeyring() (keyring.Keyring, error) {
 	// silently falling back to file backend.
 	if runtime.GOOS == "linux" {
 		cfg.AllowedBackends = []keyring.BackendType{keyring.SecretServiceBackend}
-		cfg.LibSecretCollectionName = "login"
+		// Sebastian's session bridge currently exposes the canonical default collection.
+		cfg.LibSecretCollectionName = "default"
 	}
 
 	return keyring.Open(cfg)
@@ -281,7 +282,7 @@ func debugKeyring() {
 	cfg := keyring.Config{
 		ServiceName:             serviceName,
 		AllowedBackends:         []keyring.BackendType{keyring.SecretServiceBackend},
-		LibSecretCollectionName: "login",
+		LibSecretCollectionName: "default",
 	}
 	if _, err := keyring.Open(cfg); err != nil {
 		fmt.Printf("forced secret-service open error: %v\n", err)

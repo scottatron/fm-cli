@@ -5,12 +5,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"runtime"
+	"strconv"
 	"strings"
 	"syscall"
 
-	"fm-cli/internal/api"
-	"fm-cli/internal/storage"
-	"fm-cli/internal/tui"
+	"github.com/godbus/dbus"
+
+	"github.com/scottatron/fm-cli/internal/api"
+	"github.com/scottatron/fm-cli/internal/storage"
+	"github.com/scottatron/fm-cli/internal/tui"
 
 	"github.com/99designs/keyring"
 	tea "github.com/charmbracelet/bubbletea"
@@ -18,10 +22,10 @@ import (
 )
 
 const (
-	serviceName       = "fm-cli"
-	keyringUser       = "fastmail-api-token" // The key for JMAP API token
-	keyringAppPwd     = "fastmail-app-password" // The key for CalDAV/CardDAV app password
-	keyringEmail      = "fastmail-email"     // The key for email address
+	serviceName   = "fm-cli"
+	keyringUser   = "fastmail-api-token"    // The key for JMAP API token
+	keyringAppPwd = "fastmail-app-password" // The key for CalDAV/CardDAV app password
+	keyringEmail  = "fastmail-email"        // The key for email address
 )
 
 func main() {
@@ -41,6 +45,18 @@ func main() {
 			return
 		case "debug":
 			debugSession()
+			return
+		case "debug-keyring":
+			debugKeyring()
+			return
+		case "list":
+			runListCommand()
+			return
+		case "get":
+			runGetCommand()
+			return
+		case "search":
+			runSearchCommand()
 			return
 		case "help":
 			printHelp()
@@ -128,8 +144,17 @@ func printHelp() {
 	fmt.Println("  logout    Remove Fastmail API token from system keychain")
 	fmt.Println("  settings  Configure offline mode and other settings")
 	fmt.Println("  sync      Sync pending offline changes with server")
+	fmt.Println("  list      List resources (mailboxes|emails) as JSON")
+	fmt.Println("  get       Get resources (email <id>) as JSON")
+	fmt.Println("  search    Search emails by text as JSON")
+	fmt.Println("  debug-keyring  Print keyring/DBus diagnostics")
 	fmt.Println("  help      Show this help message")
 	fmt.Println("\nIf no command is provided, the TUI will start.")
+	fmt.Println("\nHeadless examples:")
+	fmt.Println("  fm-cli list mailboxes")
+	fmt.Println("  fm-cli list emails --mailbox INBOX --limit 20")
+	fmt.Println("  fm-cli get email <email-id>")
+	fmt.Println("  fm-cli search --query \"invoice\" --limit 20")
 }
 
 func login() {
@@ -170,9 +195,7 @@ func login() {
 	appPwd := strings.TrimSpace(string(byteAppPwd))
 	fmt.Println()
 
-	ring, err := keyring.Open(keyring.Config{
-		ServiceName: serviceName,
-	})
+	ring, err := openKeyring()
 	if err != nil {
 		fmt.Printf("Error opening keyring: %v\n", err)
 		return
@@ -215,10 +238,61 @@ func login() {
 	}
 }
 
+func openKeyring() (keyring.Keyring, error) {
+	cfg := keyring.Config{ServiceName: serviceName}
+
+	// On Linux, prefer Secret Service (libsecret over D-Bus) and avoid
+	// silently falling back to file backend.
+	if runtime.GOOS == "linux" {
+		cfg.AllowedBackends = []keyring.BackendType{keyring.SecretServiceBackend}
+		// Sebastian's session bridge currently exposes the canonical default collection.
+		cfg.LibSecretCollectionName = "default"
+	}
+
+	return keyring.Open(cfg)
+}
+
+func debugKeyring() {
+	fmt.Println("fm-cli keyring debug")
+	fmt.Println("===================")
+	fmt.Printf("GOOS=%s\n", runtime.GOOS)
+	fmt.Printf("DBUS_SESSION_BUS_ADDRESS=%q\n", os.Getenv("DBUS_SESSION_BUS_ADDRESS"))
+	fmt.Printf("XDG_RUNTIME_DIR=%q\n", os.Getenv("XDG_RUNTIME_DIR"))
+
+	keyring.Debug = true
+	backends := keyring.AvailableBackends()
+	fmt.Printf("keyring.AvailableBackends=%v\n", backends)
+
+	if runtime.GOOS == "linux" {
+		if _, err := dbus.SessionBus(); err != nil {
+			fmt.Printf("dbus.SessionBus() error: %v\n", err)
+		} else {
+			fmt.Println("dbus.SessionBus() OK")
+		}
+	}
+
+	fmt.Println("\nAttempt: open default keyring config")
+	if _, err := keyring.Open(keyring.Config{ServiceName: serviceName}); err != nil {
+		fmt.Printf("default open error: %v\n", err)
+	} else {
+		fmt.Println("default open: OK")
+	}
+
+	fmt.Println("\nAttempt: open forced secret-service config")
+	cfg := keyring.Config{
+		ServiceName:             serviceName,
+		AllowedBackends:         []keyring.BackendType{keyring.SecretServiceBackend},
+		LibSecretCollectionName: "default",
+	}
+	if _, err := keyring.Open(cfg); err != nil {
+		fmt.Printf("forced secret-service open error: %v\n", err)
+	} else {
+		fmt.Println("forced secret-service open: OK")
+	}
+}
+
 func logout() {
-	ring, err := keyring.Open(keyring.Config{
-		ServiceName: serviceName,
-	})
+	ring, err := openKeyring()
 	if err != nil {
 		fmt.Printf("Error opening keyring: %v\n", err)
 		return
@@ -233,9 +307,7 @@ func logout() {
 }
 
 func getToken() (string, error) {
-	ring, err := keyring.Open(keyring.Config{
-		ServiceName: serviceName,
-	})
+	ring, err := openKeyring()
 	if err != nil {
 		return "", err
 	}
@@ -249,9 +321,7 @@ func getToken() (string, error) {
 }
 
 func getAppPassword() (appPwd, email string) {
-	ring, err := keyring.Open(keyring.Config{
-		ServiceName: serviceName,
-	})
+	ring, err := openKeyring()
 	if err != nil {
 		return "", ""
 	}
@@ -361,7 +431,7 @@ func syncNow() {
 	}
 
 	fmt.Printf("Syncing %d pending action(s)...\n", len(actions))
-	
+
 	for _, action := range actions {
 		fmt.Printf("  Syncing %s...", action.Type)
 		err := syncAction(client, db, action)
@@ -372,7 +442,7 @@ func syncNow() {
 			db.RemovePendingAction(action.ID)
 		}
 	}
-	
+
 	fmt.Println("Sync complete.")
 }
 
@@ -386,34 +456,187 @@ func syncAction(client *api.Client, db *storage.DB, action storage.PendingAction
 			return err
 		}
 		return client.SaveDraft("", data["from"], data["to"], data["subject"], data["body"])
-	
+
 	case "send_email":
 		var data map[string]string
 		if err := json.Unmarshal([]byte(action.Data), &data); err != nil {
 			return err
 		}
 		return client.SendEmail("", data["from"], data["to"], data["subject"], data["body"])
-	
+
 	case "delete":
 		return client.DeleteEmail(action.EmailID)
-	
+
 	case "set_unread":
 		var data map[string]bool
 		if err := json.Unmarshal([]byte(action.Data), &data); err != nil {
 			return err
 		}
 		return client.SetUnread(action.EmailID, data["is_unread"])
-	
+
 	case "set_flagged":
 		var data map[string]bool
 		if err := json.Unmarshal([]byte(action.Data), &data); err != nil {
 			return err
 		}
 		return client.SetFlagged(action.EmailID, data["is_flagged"])
-	
+
 	default:
 		return fmt.Errorf("unknown action type: %s", action.Type)
 	}
+}
+
+func connectJMAPClient() (*api.Client, error) {
+	token, err := getToken()
+	if err != nil || token == "" {
+		token = os.Getenv("FM_API_TOKEN")
+	}
+	if token == "" {
+		return nil, fmt.Errorf("no API token found; run 'fm-cli login' first")
+	}
+	return api.NewClient(token)
+}
+
+func printJSON(v any) {
+	b, err := json.MarshalIndent(v, "", "  ")
+	if err != nil {
+		fmt.Printf("failed to marshal JSON: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Println(string(b))
+}
+
+func runListCommand() {
+	if len(os.Args) < 3 {
+		fmt.Println("Usage: fm-cli list [mailboxes|emails] [options]")
+		os.Exit(1)
+	}
+
+	client, err := connectJMAPClient()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	switch os.Args[2] {
+	case "mailboxes":
+		mbs, err := client.FetchMailboxes()
+		if err != nil {
+			fmt.Printf("failed to list mailboxes: %v\n", err)
+			os.Exit(1)
+		}
+		printJSON(map[string]any{"mailboxes": mbs})
+	case "emails":
+		mailboxArg := "INBOX"
+		limit := 20
+		for i := 3; i < len(os.Args); i++ {
+			switch os.Args[i] {
+			case "--mailbox":
+				if i+1 < len(os.Args) {
+					mailboxArg = os.Args[i+1]
+					i++
+				}
+			case "--limit":
+				if i+1 < len(os.Args) {
+					if n, err := strconv.Atoi(os.Args[i+1]); err == nil && n > 0 {
+						limit = n
+					}
+					i++
+				}
+			}
+		}
+
+		mbs, err := client.FetchMailboxes()
+		if err != nil {
+			fmt.Printf("failed to fetch mailboxes: %v\n", err)
+			os.Exit(1)
+		}
+		mailboxID := mailboxArg
+		for _, mb := range mbs {
+			if strings.EqualFold(mb.Name, mailboxArg) || strings.EqualFold(mb.Role, mailboxArg) {
+				mailboxID = mb.ID
+				break
+			}
+		}
+
+		emails, err := client.FetchEmails(mailboxID, 0)
+		if err != nil {
+			fmt.Printf("failed to list emails: %v\n", err)
+			os.Exit(1)
+		}
+		if len(emails) > limit {
+			emails = emails[:limit]
+		}
+		printJSON(map[string]any{"mailbox": mailboxArg, "emails": emails})
+	default:
+		fmt.Println("Usage: fm-cli list [mailboxes|emails] [options]")
+		os.Exit(1)
+	}
+}
+
+func runGetCommand() {
+	if len(os.Args) < 4 || os.Args[2] != "email" {
+		fmt.Println("Usage: fm-cli get email <email-id>")
+		os.Exit(1)
+	}
+
+	client, err := connectJMAPClient()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	emailID := os.Args[3]
+	body, err := client.FetchEmailBody(emailID)
+	if err != nil {
+		fmt.Printf("failed to fetch email body: %v\n", err)
+		os.Exit(1)
+	}
+	printJSON(map[string]any{"id": emailID, "body": body})
+}
+
+func runSearchCommand() {
+	if len(os.Args) < 4 {
+		fmt.Println("Usage: fm-cli search --query <text> [--limit N]")
+		os.Exit(1)
+	}
+
+	query := ""
+	limit := 20
+	for i := 2; i < len(os.Args); i++ {
+		switch os.Args[i] {
+		case "--query", "-q":
+			if i+1 < len(os.Args) {
+				query = os.Args[i+1]
+				i++
+			}
+		case "--limit":
+			if i+1 < len(os.Args) {
+				if n, err := strconv.Atoi(os.Args[i+1]); err == nil && n > 0 {
+					limit = n
+				}
+				i++
+			}
+		}
+	}
+
+	if strings.TrimSpace(query) == "" {
+		fmt.Println("Usage: fm-cli search --query <text> [--limit N]")
+		os.Exit(1)
+	}
+
+	client, err := connectJMAPClient()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	emails, err := client.SearchEmails(query, limit)
+	if err != nil {
+		fmt.Printf("failed to search emails: %v\n", err)
+		os.Exit(1)
+	}
+	printJSON(map[string]any{"query": query, "emails": emails})
 }
 
 func debugSession() {
